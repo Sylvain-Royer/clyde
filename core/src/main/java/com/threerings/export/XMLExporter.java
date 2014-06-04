@@ -49,6 +49,12 @@ import com.google.common.collect.Multiset;
 
 import com.threerings.util.ReflectionUtil;
 
+import com.threerings.config.ConfigReference;
+import com.threerings.config.ConfigManager;
+import com.threerings.config.ManagedConfig;
+import com.threerings.config.ParameterizedConfig;
+import com.threerings.opengl.model.config.ModelConfig;
+
 import static com.threerings.export.Log.log;
 
 /**
@@ -65,6 +71,12 @@ public class XMLExporter extends Exporter
     public XMLExporter (OutputStream out)
     {
         _out = out;
+    }
+
+    public XMLExporter (OutputStream out, ConfigManager cfgmgr)
+    {
+        this(out);
+        _cfgmgr = cfgmgr;
     }
 
     @Override
@@ -231,6 +243,17 @@ public class XMLExporter extends Exporter
         } else {
             _elements.put(value, element);
             _depths.put(value, _depth++);
+            if (_cfgmgr != null) {
+                if (value instanceof ConfigReference) {
+                    ConfigReference ref = (ConfigReference)value;
+
+                    ModelConfig modelConf = _cfgmgr.getConfig(ModelConfig.class, ref);
+                    if (modelConf != null) {
+                        write(element, modelConf.getOriginal(), ModelConfig.Implementation.class);
+                        return;
+                    }
+                }
+            }
             writeValue(element, value, clazz);
             _depths.remove(value);
             _depth--;
@@ -394,6 +417,8 @@ public class XMLExporter extends Exporter
     {
         _element.appendChild(_document.createTextNode("\n"));
     }
+
+    protected ConfigManager _cfgmgr;
 
     /** The output stream. */
     protected OutputStream _out;

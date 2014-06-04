@@ -33,6 +33,7 @@ import java.awt.image.BufferedImage;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.FileOutputStream;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -48,6 +49,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -56,6 +58,7 @@ import javax.swing.JSplitPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileSystemView;
+import javax.swing.filechooser.FileFilter;
 
 import com.samskivert.swing.GroupLayout;
 import com.samskivert.swing.Spacer;
@@ -66,6 +69,7 @@ import com.threerings.config.ConfigReference;
 import com.threerings.config.ConfigUpdateListener;
 import com.threerings.editor.swing.DraggableSpinner;
 import com.threerings.editor.swing.EditorPanel;
+import com.threerings.export.XMLExporter;
 import com.threerings.util.ChangeBlock;
 
 import com.threerings.opengl.model.Animation;
@@ -105,6 +109,7 @@ public class ModelViewer extends ModelTool
 
         JMenu file = createMenu("file", KeyEvent.VK_F);
         menubar.add(file);
+        file.add(createMenuItem("export_flat", -1, -1));
         file.add(createMenuItem("quit", KeyEvent.VK_Q, KeyEvent.VK_Q));
 
         JMenu edit = createMenu("edit", KeyEvent.VK_E);
@@ -177,6 +182,18 @@ public class ModelViewer extends ModelTool
                 impl.model = new ConfigReference<ModelConfig>(path);
             }
         }
+
+        // and the export the file chooser
+        _exportChooser = new JFileChooser(_prefs.get("export_dir", null));
+        _exportChooser.setFileFilter(new FileFilter() {
+            public boolean accept (File file) {
+                return file.isDirectory() || file.toString().toLowerCase().endsWith(".xml");
+            }
+            public String getDescription () {
+                return _msgs.get("m.xml_files");
+            }
+        });
+
         _epanel.setObject(impl);
         _epanel.addChangeListener(this);
     }
@@ -266,6 +283,18 @@ public class ModelViewer extends ModelTool
             } catch (IOException e) {
                 log.warning("Failed to write snapshot.", "file", file, e);
             }
+        } else if (action.equals("export_flat")) {
+            if (_exportChooser.showSaveDialog(_cpanel) == JFileChooser.APPROVE_OPTION) {
+                File file = _exportChooser.getSelectedFile();
+                try {
+                    XMLExporter out = new XMLExporter(new FileOutputStream(file), _cfgmgr);
+                    out.writeObject(_epanel.getObject());
+                    out.close();
+                } catch (IOException e) {
+                    log.warning("Failed to export config [file=" + file + "].", e);
+                }
+            }
+            _prefs.put("export_dir", _exportChooser.getCurrentDirectory().toString());
         } else {
             super.actionPerformed(event);
         }
@@ -402,6 +431,9 @@ public class ModelViewer extends ModelTool
         /** The start and stop buttons. */
         protected JButton _start, _stop;
     }
+
+    /** The file chooser for opening and saving export files. */
+    protected JFileChooser _exportChooser;
 
     /** The toggle for automatic reset. */
     protected JCheckBoxMenuItem _autoReset;
