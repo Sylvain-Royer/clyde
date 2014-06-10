@@ -246,11 +246,15 @@ public class XMLExporter extends Exporter
             if (_cfgmgr != null) {
                 if (value instanceof ConfigReference) {
                     ConfigReference ref = (ConfigReference)value;
-
-                    ModelConfig modelConf = _cfgmgr.getConfig(ModelConfig.class, ref);
-                    if (modelConf != null) {
-                        write(element, modelConf.getOriginal(), ModelConfig.Implementation.class);
-                        return;
+                    try {
+                        ModelConfig modelConf = _cfgmgr.getConfig(ModelConfig.class, ref);
+                        if (modelConf != null) {
+                            write(element, modelConf.getOriginal(),
+                                ModelConfig.Implementation.class);
+                            return;
+                        }
+                    } catch (Exception e) {
+                        // DO NOTHING
                     }
                 }
             }

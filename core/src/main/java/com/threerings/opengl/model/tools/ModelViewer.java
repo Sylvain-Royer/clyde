@@ -288,6 +288,7 @@ public class ModelViewer extends ModelTool
                 File file = _exportChooser.getSelectedFile();
                 try {
                     XMLExporter out = new XMLExporter(new FileOutputStream(file), _cfgmgr);
+                    out.shouldSaveDefaults(true);
                     out.writeObject(_epanel.getObject());
                     out.close();
                 } catch (IOException e) {

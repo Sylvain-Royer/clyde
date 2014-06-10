@@ -198,6 +198,13 @@ public class ParticleSystemConfig extends BaseParticleSystemConfig
             return 0f;
         }
 
+        public void readFields (com.threerings.export.Importer in)
+            throws java.io.IOException
+        {
+            in.defaultReadFields();
+            System.out.println("HI");
+        }
+
         @Override
         public Geometry createGeometry (
             GlContext ctx, Scope scope, DeformerConfig deformer, PassDescriptor[] passes)
